@@ -1,0 +1,78 @@
+# -----------------------------------------------------------------------------
+# HY-Embodied-0.5-X .gitignore
+# -----------------------------------------------------------------------------
+# Rule of thumb:
+#   * User-generated artifacts (outputs, logs, caches, downloaded weights)
+#     must never be committed.
+#   * The bundled demo data under data_examples/ IS tracked (small, needed to
+#     run configs/sft/example_small.yaml out of the box).
+# -----------------------------------------------------------------------------
+
+# ---- Python packaging / caches ----------------------------------------------
+build/
+dist/
+*.egg
+*.egg-info/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---- Training outputs, logs, experiment state -------------------------------
+outputs/
+outputs*/
+log_outputs/
+logs/
+logs*/
+runs/
+wandb/
+tensorboard/
+
+# ---- Model checkpoints -------------------------------------------------------
+# `huggingface-cli download tencent/HY-Embodied-0.5-X --local-dir ckpts/...`
+# lands here; never track any weight blob.
+ckpts/
+checkpoints/
+checkpoints*/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# ---- Datasets ----------------------------------------------------------------
+# Don't commit raw jsonl / parquet by default — they tend to be large.
+# The small curated demo under data_examples/ and the fixture under tests/
+# are explicitly re-included below.
+*.jsonl
+*.parquet
+*.arrow
+!data_examples/data_demo.jsonl
+!tests/data/*.jsonl
+converted_data/
+no_converted_data/
+
+# ---- Editor / OS scraps ------------------------------------------------------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ---- Local scratch / secrets -------------------------------------------------
+tmp/
+temp/
+scratch/
+debug/
+.env
+.env.*
+
+# ---- Internal, not-for-release scripts --------------------------------------
+# (keep in tree locally, but do not publish)
+ceph_start.sh

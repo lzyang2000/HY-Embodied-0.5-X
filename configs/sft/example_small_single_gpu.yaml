@@ -1,0 +1,86 @@
+# =============================================================================
+# HY-Embodied-0.5-X SFT — single-GPU smoke-test config
+# -----------------------------------------------------------------------------
+# A minimal config for quick single-GPU testing WITHOUT DeepSpeed or any
+# distributed launcher.  Just run:
+#
+#   CUDA_VISIBLE_DEVICES=0 python -m hy_embodied.cli.train \
+#       --config configs/sft/example_small_single_gpu.yaml
+#
+# Or use the convenience script:
+#
+#   bash scripts/run_sft_single_gpu.sh
+#
+# Key differences from example_small.yaml:
+#   - deepspeed: null          (no distributed backend required)
+#   - gradient_accumulation_steps: 1  (fire optimizer step on every micro-batch)
+#   - output_dir: outputs/sft-single-gpu
+#   - save_only_model: true    (skip optimizer state → smaller checkpoints)
+#
+# Everything else (model, data, optimizer) inherits the release defaults.
+# =============================================================================
+
+model:
+  model_name_or_path: "ckpts/HY-Embodied-0.5-X"
+  torch_dtype: "bfloat16"
+  attn_implementation: null
+  trust_remote_code: false
+  gradient_checkpointing: true
+  freeze_vision_tower: false
+  freeze_language_model: false
+
+data:
+  train_data_paths:
+    - "data_examples/data_demo.jsonl"
+  train_data_sampling_ratios: {}
+  eval_data_paths: []
+  max_length: 15000
+  max_multimodal_tokens: 10000
+  skip_overlong_samples: true
+  skip_broken_samples: true
+  image_min_pixels: 784
+  image_max_pixels: 1048576
+  video_min_pixels: 784
+  video_max_pixels: 262144
+  video_fps: 2.0
+  max_frames: 32
+  num_workers: 4
+  pad_to_multiple_of: 8
+
+train:
+  output_dir: "outputs/sft-single-gpu"
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+
+  # With a single GPU and no gradient accumulation, every micro-batch triggers
+  # an optimizer step.  On the 14-sample demo this gives 14 steps per epoch.
+  gradient_accumulation_steps: 1
+
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  num_train_epochs: 1
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  logging_steps: 1
+  save_steps: 1000
+  eval_steps: 1000
+  save_total_limit: 2
+  seed: 42
+  bf16: true
+  fp16: false
+  tf32: true
+  report_to:
+    - "tensorboard"
+
+  # --- No distributed backend -------------------------------------------------
+  # Plain single-process training: no DeepSpeed, no FSDP, no torchrun needed.
+  deepspeed: null
+  fsdp: null
+  fsdp_config: null
+  ddp_find_unused_parameters: false
+
+  # Skip optimizer / scheduler state to keep checkpoints small (~7 GB instead
+  # of ~50 GB).  Set to false if you need mid-training resume.
+  save_only_model: true
+
+  resume_from_checkpoint: null

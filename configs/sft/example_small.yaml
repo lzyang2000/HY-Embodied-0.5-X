@@ -1,0 +1,198 @@
+# =============================================================================
+# HY-Embodied-0.5-X SFT — default training config
+# -----------------------------------------------------------------------------
+# This is the one and only reference SFT config shipped with the repo. The
+# non-data parameters below are the *recommended defaults* used for the
+# HY-Embodied-0.5-X release; **external users should only need to edit the
+# ``data.train_data_paths`` / ``data.train_data_sampling_ratios`` section** to
+# point at their own JSONL mixture and keep the rest unchanged.
+#
+# Out of the box it trains on ``data_examples/data_demo.jsonl`` (14 bundled
+# samples across 6 capabilities, all images shipped in the repo), so the
+# following commands run end-to-end with no external data:
+#
+#   # single GPU smoke test
+#   CUDA_VISIBLE_DEVICES=0 python -m hy_embodied.cli.train \
+#       --config configs/sft/example_small.yaml
+#
+#   # single node, 8 GPUs, DeepSpeed ZeRO-2
+#   bash scripts/run_sft_1node_8gpu.sh
+#
+#   # 4 nodes x 8 GPUs, accelerate + ZeRO-2
+#   bash scripts/run_sft_4node_8gpu.sh
+#
+# Every field is documented in ``docs/training.md`` — see the "Config
+# reference" section there for the full semantics.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# model:  where weights come from, precision, freezing options.
+# -----------------------------------------------------------------------------
+model:
+  # Local directory produced by ``huggingface-cli download tencent/HY-Embodied-0.5-X``.
+  # You can also pass the HF Hub repo id ``tencent/HY-Embodied-0.5-X`` directly.
+  model_name_or_path: "ckpts/HY-Embodied-0.5-X"
+
+  # Compute dtype for model parameters. ``bfloat16`` is required on the
+  # release-training hardware (A100/H20/H100). Set ``float16`` only on GPUs
+  # without bf16 (e.g. V100) and also flip ``train.bf16``/``train.fp16``.
+  torch_dtype: "bfloat16"
+
+  # ``null`` lets transformers pick the best available kernel (FA2 when
+  # flash_attn is installed). Override to ``"sdpa"`` / ``"eager"`` for
+  # debugging or for hardware without FA2 support.
+  attn_implementation: null
+
+  # transformers >= 4.57 registers HY-Embodied natively; keep this false so
+  # local checkpoints don't try to load non-existent auto_map python files.
+  trust_remote_code: false
+
+  # Save activations rather than keeping them in memory; cuts memory ~3x at
+  # ~20% throughput cost. Strongly recommended for this 4B-param MoT model.
+  gradient_checkpointing: true
+
+  # Full-finetune by default (matches the release recipe). Flip these to
+  # ``true`` if you only want to adapt the LM while keeping the vision tower
+  # / language backbone frozen — useful for adapter-style / projection-only
+  # fine-tuning on small data.
+  freeze_vision_tower: false
+  freeze_language_model: false
+
+# -----------------------------------------------------------------------------
+# data:  JSONL sources, sampling ratios, length / pixel budgets.
+# -----------------------------------------------------------------------------
+# This is the section you are expected to customize.  The rest of the file
+# can usually stay untouched.
+data:
+  # List of JSONL files (one sample per line, schema in docs/data_format.md).
+  # Replace with your own paths; keep ``data_examples/data_demo.jsonl`` for a
+  # quick sanity run.
+  train_data_paths:
+    - "data_examples/data_demo.jsonl"
+
+  # Per-file resampling ratio:
+  #   < 1.0 downsample (keep a random subset)
+  #   = 1.0 keep all samples (default if unset)
+  #   > 1.0 upsample via repetition (e.g. 2.0 = 2x through the file)
+  #   = 0.0 skip the file
+  # Example for a real mixture:
+  #   train_data_sampling_ratios:
+  #     "data/in_domain_large.jsonl":  1.0   # keep all
+  #     "data/in_domain_small.jsonl":  2.0   # upsample 2x
+  #     "data/ood_reg.jsonl":          0.1   # use 10%
+  train_data_sampling_ratios: {}
+
+  # Optional held-out set for ``trainer.evaluate`` (uses the same schema).
+  eval_data_paths: []
+
+  # Text-side token budget per sample; oversized samples are skipped (see
+  # skip_overlong_samples). 15000 comfortably covers long-horizon planning
+  # chains and the 20–68-turn refspatial dialogues in the demo.
+  max_length: 15000
+
+  # Upper bound on vision / video tokens per sample (None = unlimited). Keeps
+  # very high-res frames from blowing the budget; tune together with
+  # ``image_max_pixels`` below.
+  max_multimodal_tokens: 10000
+
+  # Silently drop samples longer than ``max_length`` / ``max_multimodal_tokens``
+  # (with a WARNING) instead of crashing the run.
+  skip_overlong_samples: true
+
+  # Silently drop samples whose images / videos fail to load (missing path,
+  # corrupted file, …) instead of crashing the run.
+  skip_broken_samples: true
+
+  # Image preprocessing budget. The processor resizes so that the resulting
+  # pixel count stays in [min, max]. Larger max = better detail but more
+  # vision tokens; 1024*1024 is the release default.
+  image_min_pixels: 784
+  image_max_pixels: 1048576
+
+  # Same idea for video frames.
+  video_min_pixels: 784
+  video_max_pixels: 262144
+
+  # Video sampling: decode at ``video_fps`` fps and cap at ``max_frames``
+  # frames per clip.
+  video_fps: 2.0
+  max_frames: 32
+
+  # DataLoader worker count per rank. 4 is a good default on SSD-backed
+  # datasets; raise for slow storage, drop to 0 when debugging.
+  num_workers: 4
+
+  # Pad sequences to a multiple of this value; 8 keeps tensor cores happy
+  # under bf16 on Ampere+ GPUs.
+  pad_to_multiple_of: 8
+
+# -----------------------------------------------------------------------------
+# train:  optimizer / scheduler / logging / distributed strategy.
+# -----------------------------------------------------------------------------
+# These are the release-run hyperparameters. In practice you should only
+# need to change ``output_dir`` and possibly ``num_train_epochs`` /
+# ``gradient_accumulation_steps`` based on your data size.
+train:
+  # Where checkpoints, logs, and the resolved config go.
+  output_dir: "outputs/hy-embodied-sft"
+
+  # Micro-batch per GPU. For long multimodal sequences keep this at 1 and
+  # scale via ``gradient_accumulation_steps`` / GPU count instead.
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+
+  # Effective global batch = per_device * gradient_accumulation_steps * world_size.
+  # Release run: 1 * 2 * 32 = 64 across 4 nodes x 8 GPUs.
+  # On 1 node x 8 GPUs this gives 1 * 2 * 8 = 16, a good default.
+  # For quick smoke-testing the bundled 14-sample demo you can temporarily
+  # lower this to 1 so at least one optimizer step actually fires.
+  gradient_accumulation_steps: 2
+
+  # Optimizer (AdamW) hyperparameters from the release run.
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+
+  # Passes over the training corpus.
+  num_train_epochs: 1
+
+  # LR schedule: cosine decay with a short linear warmup.
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+
+  # Logging / checkpointing cadence (in optimizer steps).
+  logging_steps: 10
+  save_steps: 1000
+  eval_steps: 1000
+  # Keep the latest N checkpoints on disk, prune older ones.
+  save_total_limit: 3
+
+  # Reproducibility seed (data shuffle, dropout, init RNGs).
+  seed: 42
+
+  # Mixed-precision: bf16 matches ``model.torch_dtype`` above.
+  bf16: true
+  fp16: false
+  # Allow TF32 matmuls on Ampere+ for ~20% speedup at no accuracy cost.
+  tf32: true
+
+  # Where to ship training metrics. ``tensorboard`` writes event files under
+  # ``output_dir/runs``. Use ``[]`` to disable all reporters or add
+  # ``"wandb"`` if you have it configured.
+  report_to:
+    - "tensorboard"
+
+  # --- Distributed strategy ------------------------------------------------
+  # Default = DeepSpeed ZeRO-2; most memory-efficient setting for this 4B
+  # model family. Set to ``null`` for plain DDP, or switch to FSDP by
+  # setting ``fsdp`` + ``fsdp_config`` and leaving ``deepspeed: null``.
+  deepspeed: "configs/deepspeed/zero2.json"
+  fsdp: null
+  fsdp_config: null
+  ddp_find_unused_parameters: false
+
+  # ``false`` also saves optimizer / scheduler / RNG state, enabling full
+  # resume; ``true`` keeps only model weights (smaller checkpoints).
+  save_only_model: false
+
+  # Path to a previous checkpoint to resume from, or ``null`` to start fresh.
+  resume_from_checkpoint: null
