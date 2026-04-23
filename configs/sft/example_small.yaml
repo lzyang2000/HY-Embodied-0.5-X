@@ -43,7 +43,7 @@ model:
   # debugging or for hardware without FA2 support.
   attn_implementation: null
 
-  # transformers >= 4.57 registers HY-Embodied natively; keep this false so
+  # transformers (commit 9293856) registers HY-Embodied natively; keep this false so
   # local checkpoints don't try to load non-existent auto_map python files.
   trust_remote_code: false
 

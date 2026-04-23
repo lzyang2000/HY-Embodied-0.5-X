@@ -35,7 +35,7 @@ classifiers = [
 # required to import the library and run basic inference.
 dependencies = [
     "torch>=2.8",
-    "transformers>=4.57.0",
+    "transformers @ git+https://github.com/huggingface/transformers@9293856c419762ebf98fbe2bd9440f9ce7069f1a",
     "accelerate>=1.0",
     "safetensors>=0.5",
     "Pillow",

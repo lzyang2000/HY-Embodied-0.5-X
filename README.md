@@ -157,7 +157,7 @@ pip install -e .
 | PyTorch | 2.10.0                          |
 | GPU     | NVIDIA GPU with ≥ 16 GB VRAM    |
 
-> Key dependencies: `transformers >= 4.57` (native HY-Embodied support),
+> Key dependencies: `transformers` ([specific commit](https://github.com/huggingface/transformers/commit/9293856c419762ebf98fbe2bd9440f9ce7069f1a), native HY-Embodied support),
 > `flash_attn==2.8.3`, `accelerate`, `deepspeed`, `timm`, `liger-kernel`.
 > See `setup_env.sh` and `requirements.txt` for the pinned list.
 

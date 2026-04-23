@@ -79,7 +79,7 @@ cli/infer.py  ─▶  inference/pipeline.py
 
 ## Model loading philosophy
 
-Since `transformers >= 4.57` natively registers `HunYuanVLMoT{Config,Model,Processor}`
+Since `transformers` ([commit `9293856`](https://github.com/huggingface/transformers/commit/9293856c419762ebf98fbe2bd9440f9ce7069f1a)) natively registers `HunYuanVLMoT{Config,Model,Processor}`
 and `HunYuanDenseV1Config`, **no local modelling code is needed**. Both the
 trainer and the inference pipeline:
 

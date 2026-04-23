@@ -126,7 +126,7 @@ you should only need to touch the `data` section.
 
 ### Model loading
 
-`transformers >= 4.57` ships native support for the `hunyuan_vl_mot` and
+`transformers` ([specific commit `9293856`](https://github.com/huggingface/transformers/commit/9293856c419762ebf98fbe2bd9440f9ce7069f1a)) ships native support for the `hunyuan_vl_mot` and
 `hunyuan_v1_dense` model types. The training code:
 
 1. Reads `config.json` in the checkpoint directory and logs the detected
