@@ -63,6 +63,7 @@ _model_name: str = "HY-Embodied-0.5-X"
 # Pydantic request / response schemas (OpenAI-compatible subset)
 # ---------------------------------------------------------------------------
 
+
 class ImageURL(BaseModel):
     url: str
     detail: str | None = None

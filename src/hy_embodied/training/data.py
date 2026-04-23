@@ -310,7 +310,7 @@ class LazySupervisedDataset(Dataset):
             sample = self.samples[sample_index]
             try:
                 return self._encode_sample(sample)
-            except Exception as exc:  # noqa: BLE001
+            except (ValueError, RuntimeError, OSError, KeyError, IndexError) as exc:
                 last_error = exc
                 self.failures += 1
                 if not (self.data_config.skip_broken_samples or self.data_config.skip_overlong_samples):
