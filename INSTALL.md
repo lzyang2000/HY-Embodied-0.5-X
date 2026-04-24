@@ -78,6 +78,31 @@ The script uses `set -e`. When flash_attn fails in Step 6, Steps 7–8 (transfor
 
 If you want an idempotent full-reinstall path, consider editing `setup_env.sh` locally to guard Step 6 with `pip show flash_attn || pip install ...`, or split the script into two.
 
+## Pitfall #3 — `run_server.sh` binds to `x86_64-conda-linux-gnu`
+
+Starting the server in an activated `hy_embodied_x` env fails with:
+
+```
+ERROR:    [Errno -5] No address associated with hostname
+```
+
+**Why:** `scripts/run_server.sh` defaults its bind address via `HOST="${HOST:-0.0.0.0}"`. But conda's `cxx-compiler` package (pulled in transitively by `cuda-toolkit`, same thing that causes Pitfall #1) exports `HOST=x86_64-conda-linux-gnu` on env activation — that's the C compiler target triple, not a hostname. The shell substitution sees `HOST` as non-empty and hands the compiler triple to uvicorn.
+
+**Fix — pick one:**
+
+```bash
+# Override per-invocation
+HOST=0.0.0.0 bash scripts/run_server.sh
+
+# Or clear it in the shell
+unset HOST && bash scripts/run_server.sh
+
+# Or edit scripts/run_server.sh to force the default
+#   HOST=0.0.0.0            (drop the :- fallback)
+```
+
+Any of the three works. The per-invocation override is the least invasive.
+
 ## Disk / memory notes
 
 - Total footprint of the env + weights: ~25 GB (conda env ~12 GB, weights 7.1 GB, CUDA toolkit ~4 GB).
