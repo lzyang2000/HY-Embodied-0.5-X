@@ -1,6 +1,6 @@
 # HY-Embodied-0.5-X
 
-### An Embodied Multimodal Foundation Model for Real-World Robotics
+### An Enhanced Embodied Foundation Model for Real-World Agents
 
 *Tencent Robotics X × HY Vision Team*
 
