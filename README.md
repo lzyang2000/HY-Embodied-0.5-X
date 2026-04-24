@@ -2,7 +2,11 @@
 
 ### An Embodied Multimodal Foundation Model for Real-World Robotics
 
-*Tencent Robotics X Lab × Hunyuan Team*
+*Tencent Robotics X × HY Vision Team*
+
+<p align="center">
+  <img src="./assets/logo.png" width="80%" />
+</p>
 
 <p align="center">
   <a href="https://tairos.tencent.com/openSourceModels/hy-embodied"><img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page"></a>
@@ -15,8 +19,8 @@
 
 ---
 
-**HY-Embodied-0.5-X** is an open-source embodied multimodal foundation model
-jointly released by Tencent Robotics X Lab and the Hunyuan team. Built on
+**HY-Embodied-0.5-X** is an enhanced open-source embodied multimodal foundation model
+jointly released by Tencent Robotics X and the HY Vision Team. Built on
 top of the `HY-Embodied-0.5 MoT-2B` architecture (4B total parameters with
 only 2B activated), it is specifically optimized for the core loop of
 real-world robotics — **"understand, reason, and act"**.
@@ -95,9 +99,7 @@ This ensures each unit of compute is invested in the most valuable data.
 
 Across **10 open-source benchmarks** covering planning, spatial reasoning,
 embodied QA, visual reference, and trajectory understanding,
-HY-Embodied-0.5-X achieves **6 first-place and 3 second-place results**,
-and stays in the top tier on general vision-spatial benchmarks such as
-CV-Bench.
+HY-Embodied-0.5-X stays in the top tier.
 
 <p align="center">
   <img src="./assets/Results-All-benchmarks.png" width="90%" />
@@ -164,7 +166,7 @@ pip install -e .
 ## 📥 Downloading the Weights
 
 ```bash
-huggingface-cli download tencent/HY-Embodied-0.5-X \
+hf download tencent/HY-Embodied-0.5-X \
     --local-dir ckpts/HY-Embodied-0.5-X
 ```
 
@@ -350,7 +352,7 @@ HY-Embodied-0.5-X/
 ├── data_examples/            # per-capability sample JSONLs (+ README)
 ├── docs/                     # data_format / training / inference / architecture
 ├── assets/                   # images used in docs / README
-├── ckpts/                    # (gitignored) `huggingface-cli download` target
+├── ckpts/                    # (gitignored) `hf download` target
 ├── outputs/                  # (gitignored) training run outputs
 └── inference.py              # backward-compat shim for the legacy CLI
 ```
@@ -374,15 +376,15 @@ HY-Embodied-0.5-X targets the following embodied scenarios:
 
 ```bibtex
 @article{tencent2026hyembodied05x,
-  title   = {HY-Embodied-0.5-X: An Embodied Multimodal Foundation Model for Real-World Robotics},
-  author  = {Tencent Robotics X Lab and Hunyuan Team},
+  title   = {HY-Embodied-0.5-X: An Enhanced Embodied Foundation Model for Real-World Agents},
+  author  = {Tencent Robotics X and HY Vision Team},
   year    = {2026}
 }
 ```
 
 ## 🙏 Acknowledgements
 
-Thanks to Tencent Robotics X Lab, the Hunyuan team, the Hugging Face
+Thanks to the Hugging Face
 community, and all open-source contributors. By open-sourcing
 HY-Embodied-0.5-X we hope to offer the embodied-AI community a more
 deployment-oriented foundation, and to push models from *general
