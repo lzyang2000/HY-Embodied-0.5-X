@@ -79,5 +79,5 @@ msgpack==1.1.2
 protobuf
 grpcio==1.76.0
 Markdown==3.10.1
-Werkzeug==3.1.5
+Werkzeug==3.1.6
 absl-py==2.3.1
