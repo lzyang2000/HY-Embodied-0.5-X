@@ -72,6 +72,18 @@ CC=/usr/bin/gcc CXX=/usr/bin/g++ CUDA_HOME=/usr/local/cuda \
 ```
 This compiles cleanly but takes ~15 min on an 8-core box. Keep `MAX_JOBS=4` unless you have >64 GB RAM.
 
+### aarch64 / Jetson Thor (SBSA, Blackwell sm_110)
+
+Dao-AILab only publishes `linux_x86_64` wheels, so the URL above won't resolve on Jetson. On Thor the env also resolves to `torch 2.10.0+cu130` (not cu126 — the cu126 PyTorch index has no aarch64 build), so you need a wheel matched to cu130. NVIDIA's Jetson AI Lab devpi index has one:
+
+```bash
+pip install 'https://pypi.jetson-ai-lab.io/sbsa/cu130/+f/621/0324cfd00b9e4/flash_attn-2.8.4-cp312-cp312-linux_aarch64.whl'
+```
+
+Constraints this wheel matches: aarch64 / cu130 / cp312 / flash_attn 2.8.4. 2.8.4 is API-compatible with the pinned 2.8.3 (same `flash_attn_func` / `flash_attn_varlen_func` surface). Verified to import on Thor (sm_110).
+
+Source-compiling on Thor is feasible but slow (~30+ min) and easy to OOM under 16 GB RAM with default `MAX_JOBS`. The prebuilt wheel is the recommended path.
+
 ## Pitfall #2 — `setup_env.sh` bails hard when flash_attn fails
 
 The script uses `set -e`. When flash_attn fails in Step 6, Steps 7–8 (transformers from the pinned commit, and the 40-ish runtime deps) never run, leaving the env half-populated. You need to install a prebuilt flash_attn wheel first (Step 3 above), then finish the remaining pip installs manually (Step 4). Re-running `setup_env.sh` after flash_attn is installed would work in principle, but it tries to re-install `flash_attn==2.8.3` and fails again.
